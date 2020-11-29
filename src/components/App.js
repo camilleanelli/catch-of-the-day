@@ -2,7 +2,8 @@ import React from 'react';
 import Header from './Header';
 import Order from './Order';
 import Inventory from './Inventory';
-
+import sampleFishes from '../sample-fishes';
+import Fish from './Fish';
 class App extends React.Component {
   // on a besoin de l'état initial s
   // constructor() {
@@ -28,6 +29,24 @@ class App extends React.Component {
       fishes: fishes
     });
   }
+
+  loadSampleFishes = () => {
+    // on veut mettre à jour une partie de l'état `fishes`
+    this.setState({
+      // on stocke les items de sampleFishes
+      fishes: sampleFishes
+    });
+  }
+
+  addToOrder = (key) => {
+    // copie de l'état
+    const order = { ...this.state.order };
+    // ajouter l'order
+    order[key] = order[key] + 1 || 1;
+    // mettre à jour l'état
+    this.setState({ order });
+  }
+
   render() {
     return (
       <div className="catch-of-the-day">
@@ -36,10 +55,19 @@ class App extends React.Component {
         {/* on peut voir apparaitre les props sur le navigateur dans les composant */}
         {/* Header est une instance du composant Header */}
           <Header tagline="Fresh seafood market" />
+          <ul className="fish">
+          {/* chaque item d'un array doit avoir un identifiant unique en react */}
+           {Object.keys(this.state.fishes).map(key => <Fish
+            index={key}
+            key={key}
+            details={this.state.fishes[key]}
+            addToOrder={this.addToOrder}
+           />)}
+          </ul>
         </div>
         <Order/>
-        {/* on ajouter une props au composant pour qu'il puisse l'utiliser */}
-        <Inventory addFish={this.addFish} />
+        {/* on ajoute une props au composant pour qu'il puisse l'utiliser */}
+        <Inventory addFish={this.addFish} loadSampleFishes={this.loadSampleFishes} />
       </div>
     )
   }
