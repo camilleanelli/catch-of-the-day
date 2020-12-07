@@ -4,6 +4,8 @@ import Order from './Order';
 import Inventory from './Inventory';
 import sampleFishes from '../sample-fishes';
 import Fish from './Fish';
+import base from '../base';
+
 class App extends React.Component {
   // on a besoin de l'état initial s
   // constructor() {
@@ -16,7 +18,36 @@ class App extends React.Component {
     fishes: {},
     order: {}
   };
+  // le composant s'est affiché
+  componentDidMount() {
+    const { params } = this.props.match;
+    // pour sauvegarder les orders dans le localStorage on les recupere avec la clès StoreId
+    const localStorageRef = localStorage.getItem(params.storeId);
+    console.log(localStorageRef);
+    if(localStorageRef) {
+      this.setState({ order: JSON.parse(localStorageRef)});
+    }
+    // ref est une ref de la donnée sur firebase
+    // syncState pour synchro la donnée sur firebase
+    this.ref = base.syncState(`${params.storeId}/fishes`, {
+      context: this,
+      state: 'fishes'
+    });
+  }
 
+  // stocker les order coté navigateur dans le localStorage
+  componentDidUpdate() {
+    // le premier argument passé sera une clés et l'autre sa valeur
+    // un objet renvoie [object, object] si c'est une string qui est attendu comme c'est le cas dans le localStorage
+    // on utilise donc JSON.stringify
+    localStorage.setItem(this.props.match.params.storeId, JSON.stringify(this.state.order));
+    // console.log(this.state.order);
+  }
+
+  // le composant s'est affiché et on est retourné en arriere
+  // componentWillUnmount() {
+  //   base.removeBinding(this.ref);
+  // }
   // on définie la méthode qui va mettre à jour l'état en récuperant des données
   addFish = fish => {
     // on doit récupérer les itemss
@@ -30,6 +61,23 @@ class App extends React.Component {
     });
   }
 
+  updateFish = (key, update) => {
+    // on prend un copie de l'état en cours
+    const fishes = { ...this.state.fishes};
+    // on met a jour une partie l'état ici fishes
+    fishes[key] = update;
+    // on set l'état
+    this.setState({fishes: fishes});
+  }
+
+  deleteFish = (key) => {
+    // faire un copie de l'état
+    const fishes = { ...this.state.fishes };
+    // on met à jour la donnée
+    fishes[key] = null;
+    // on met à jour l'état pour de bon
+    this.setState({fishes: fishes });
+  }
   loadSampleFishes = () => {
     // on veut mettre à jour une partie de l'état `fishes`
     this.setState({
@@ -45,6 +93,15 @@ class App extends React.Component {
     order[key] = order[key] + 1 || 1;
     // mettre à jour l'état
     this.setState({ order });
+  }
+
+  removeFromOrder = (key) => {
+    // copie de l'état
+    const order = { ...this.state.order };
+    // supprimer l'item
+    delete order[key];
+    // mettre a jour l'état
+    this.setState({order: order});
   }
 
   render() {
@@ -65,9 +122,13 @@ class App extends React.Component {
            />)}
           </ul>
         </div>
-        <Order/>
         {/* on ajoute une props au composant pour qu'il puisse l'utiliser */}
-        <Inventory addFish={this.addFish} loadSampleFishes={this.loadSampleFishes} />
+        <Order removeItem={this.removeFromOrder} fishes={this.state.fishes} order={this.state.order} />
+        <Inventory fishes={this.state.fishes}
+         addFish={this.addFish}
+         deleteFish={this.deleteFish}
+         updateFish={this.updateFish}
+         loadSampleFishes={this.loadSampleFishes} />
       </div>
     )
   }
